@@ -1,0 +1,120 @@
+
+/
+
+Perfecto. Entonces ya podemos fijar la estructura base de la aplicación. Y añado una decisión importante: el fichaje no será un añadido secundario; lo vamos a diseñar desde el principio porque después nos permitirá saber horas trabajadas, retrasos, ausencias y coste real por empleada. PASO 2 — Estr
+
+pasted
+
+vale crea la version 1 de la interfaz y dime donde lo pego
+
+Archivo leído, creó un archivo, archivos compartidos
+Ahí lo tienes, arriba en el artefacto — es una React app interactiva, cárgala tal cual en Claude (o en tu entorno React con Tailwind + lucide-react) y ya puedes clicar por ella.
+
+Cómo probarla:
+
+Agenda: navega días con las flechas, haz clic en un hueco libre de Génesis o Silvia → se abre el modal de cita. Si eliges un servicio que ocupa la única cabina compatible en esa franja, o la empleada ya tiene cita, te lo rechaza con el mensaje de error — esa es la regla de las 5 preguntas del documento, simplificada a nivel interfaz.
+Empleadas / Servicios / Cabinas: añadir, editar, activar/desactivar — sin tocar código, como pediste.
+Fichajes: botón fichar entrada/salida por empleada + tabla de horas del día.
+Inicio: resumen rápido del día.
+Un par de cosas que quiero que sepas antes de que la pruebes:
+
+Es solo interfaz. No hay base de datos ni GHL — al recargar la página se pierde todo (vuelve a los datos de ejemplo). Eso es justo lo que decías: “primero verla y probarla.”
+Los datos de Génesis, Silvia, cabinas y servicios están precargados con valores de ejemplo (Eternal Radiance, Slim Contour, Dermapen, etc.) para que la puedas probar de inmediato — cámbialos como quieras desde Empleadas/Servicios.
+Usé la paleta y tipografías de la marca (crema/dorado/carbón, Cormorant Garamond + Jost).
+Recomendación estratégica: antes de invertir en conectar Supabase/GHL a esto, dedica 10 minutos a que Silvia y Génesis “reserven” un par de citas de prueba directamente en esta interfaz — si el flujo de clic-en-hueco-libre les resulta más lento o confuso que Fresha, es más barato cambiarlo ahora que después de cablear la parte técnica.
+
+
+Clinic app v1
+Código·JSX 
+y esto no lo puedo subir a ghl o en hostinger? Para tenerlo siempre activo y sin tener que tener claude?
+
+Weighing persistence needs and next steps for real deployment.
+Corto: no tal cual está. Este archivo es un componente React que vive dentro de Claude — para tenerlo “siempre activo” sin necesitar Claude, hay que convertirlo en una app web real desplegada, y ahora mismo le faltan dos piezas para eso:
+
+No tiene base de datos. Los datos (citas, empleadas, fichajes) viven solo en la memoria del navegador — al recargar la página se pierden. Para uso real necesita conectarse a algo como Supabase (que ya tenías documentado como plan de respaldo).
+No es un proyecto desplegable por sí solo. Es un único archivo .jsx pensado para el entorno de Claude. Para subirlo a un hosting hace falta envolverlo en un proyecto completo (Next.js o Vite) y compilarlo.
+Sobre las dos opciones que mencionas:
+
+GHL: no aloja código propio. Lo que sí puedes hacer es desplegar la app en otro sitio (Vercel, Hostinger) y luego meterla dentro de GHL como un enlace de menú personalizado (iframe), para que el equipo la abra desde dentro de GHL. Pero el hosting real tiene que ser externo.
+Hostinger: sí es viable. Si tienes plan con Node.js, puedes alojar la app completa (frontend + backend). Si es hosting compartido solo estático, hay que compilar la app (npm run build) y subir los archivos resultantes por FTP — funciona, pero entonces la base de datos tiene que vivir aparte (Supabase, por ejemplo, que es gratis en el nivel que necesitas).
+Montar el proyecto completo
+Convertir este componente en un proyecto Vite o Next.js real (estructura de carpetas, package.json, build). Es trabajo de código, lo puedo preparar yo.
+1
+2
+3
+4
+5
+Recomendación estratégica: dado que ya validaste con Silvia y Génesis (o vas a hacerlo ahora) que la interfaz les funciona, yo pasaría directamente al paso 1 y 2 juntos — montar el proyecto con Supabase desde el principio, en vez de tener una fase intermedia sin base de datos. Es el mismo trabajo, pero evitas reescribir el manejo de datos dos veces.
+
+¿Quieres que prepare el proyecto completo (Vite + Supabase) para que solo tengas que hacer npm install y subirlo a Vercel o Hostinger? Puedo dejarte también el script SQL de las tablas.
+
+Planificando el esquema y la limpieza del indicador de revisión.
+Voy a ello. Antes de tocar nada miro cómo marca hoy el importador las reservas del bot con servicio dudoso, qué aviso “revisar” existe ya en la cita y qué ofrece el panel del bot de IA, para construir la bandeja y el diagnóstico encima de lo que ya hay.
+
+Se ejecutaron 3 comandos
+Entendido el panorama. Antes de escribir, localizo cómo guarda y sincroniza la app una cita editada y dónde van el botón de la agenda y la insignia del menú:
+
+Se ejecutaron 27 comandos, archivos compartidos
+Las opciones A y E están hechas y van en clinic-nails-agenda-nextjs.zip. No hay que pegar nada nuevo en Supabase. Todo pasa las pruebas con simuladores y compila, pero no lo he probado contra tu GHL real.
+
+E · Bandeja “Por revisar”
+En la Agenda sale el botón “⚠ Por revisar (N)”, y el menú “Agenda” lleva una insignia con el mismo número. Salen las reservas del bot que llegaron sin servicio (de hoy en adelante y de los últimos 3 días, sin canceladas ni cobradas). Cada una te enseña:
+
+el título que tenía en GHL;
+lo que el bot escribió en el campo “Servicio”, si escribió algo;
+el servicio y la duración que tiene ahora, que son los de por defecto.
+Eliges el servicio correcto; primero salen los que hace esa empleada.
+
+Corregir: la cita pasa a durar lo que dura ese servicio, se busca cabina y se corrige en GHL el título y la duración. Antes de confirmar te dice cuánto durará. Si pisa otra cita, queda fuera de horario o esa profesional no hace ese servicio, te avisa sin bloquear y el botón pasa a “Corregir igualmente”.
+Está bien así: deja todo como estaba y solo quita el aviso.
+Abrir la cita: para cambiar más cosas.
+Lo pueden usar también las empleadas, y cada corrección queda anotada en Actividad.
+
+A · Que el bot apunte el servicio con todas las empleadas
+La app ya lee el campo “Servicio” del contacto para todas a la vez. Lo que he añadido:
+
+Diagnóstico por empleada. En Configuración → Conexiones → panel del bot hay “¿Está llegando el servicio con cada empleada?”. Muestra las reservas del bot de los últimos 30 días y cuántas llegaron con servicio o sin él. Si con alguna casi nunca llega, te dice con quién falla y qué revisar en GHL. Así verás si funciona con todas o solo con una.
+Varios servicios en el campo. Si el bot escribe “Dermapen, Radiofrecuencia” (o “…y…”, “+”, “;”), el primero es el principal, el otro va de extra, la cita dura la suma y GHL se corrige con los dos nombres. Un servicio que se llame “Manicura y pedicura” no se parte. Si algún trozo no se reconoce, la cita queda por revisar. El texto para pegar en el bot ya lo explica.
+Corregí además dos fallos:
+
+La marca “Revisa el servicio” no se quitaba cuando el bot había escrito algo que no coincidía.
+Al guardar varios servicios, una línea posterior los dejaba vacíos.
+Lo que tienes que hacer tú
+Para varios servicios: el campo “Servicio” de GHL tiene que ser de texto. Una lista desplegable solo admite uno.
+Prueba real: haz una reserva con el bot y mira cómo entra. Si el servicio llega mal, sale en “Por revisar” y se corrige allí. Con el diagnóstico verás si funciona con todas las empleadas.
+
+Clinic nails agenda nextjs
+ZIP 
+1791765381440_image.png
+desde el enlace que genera no me deja modificarlo anularlo ni cambiarlo arreglalo
+
+Comprobando si la regla de 24 horas es configurable.
+Antes de tocar nada, compruebo si esto es un fallo o la regla de las 24 horas funcionando: tu cita es hoy a las 12:30. Miro cómo se calcula el margen y qué valores admite el ajuste.
+
+Ejecutó un comando
+No está roto: es la regla de las 24 horas funcionando. Tu cita es hoy, lunes 12 a las 12:30, así que le quedan menos de 24 h y la página solo permite cambiarla o cancelarla llamando. Lo he comprobado en el código: el margen se mide desde ahora hasta la hora de la cita y el tuyo está en 24 h.
+
+Para probar el enlace con esa misma cita
+
+Entra en Configuración → Reservas online → “Cancelar hasta (horas antes)”.
+Pon 0. Con 0, la clienta puede cambiar o cancelar hasta justo antes de que empiece la cita.
+Pulsa Guardar y recarga el enlace. Ya te saldrán “Cambiar el día o la hora” y “Cancelar mi cita”.
+Otra forma de probarlo: crea o usa una cita con más de 24 h de antelación y abre su enlace sin tocar ningún ajuste.
+
+Cuando termines de probar, vuelve a poner 24 (o el margen que quieras para clientas reales). Con 0, una clienta puede anular su cita a las 12:29 y te deja el hueco vacío. Para un centro de estética te recomiendo entre 12 y 24 h.
+
+Si quieres, puedo añadir un ajuste “Teléfono de contacto” para que el mensaje de “llámanos y lo vemos” lleve un botón de llamada o de WhatsApp. Ahora mismo dice “llámanos” sin dar el número.
+
+
+
+
+
+Los espectadores no ven los mensajes nuevos. Actualizar chat compartido
+
+
+
+
+
+
+
+
