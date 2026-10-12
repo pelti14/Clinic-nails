@@ -22,6 +22,8 @@ import Marketing from "./Marketing";
 import HorariosGHL from "./HorariosGHL";
 import PorRevisar from "./PorRevisar";
 import { citasPorRevisar, corregirServicio, notaRevisada } from "../lib/porRevisar";
+import { citasNuevas, marcaVistas, claveMarca } from "../lib/novedadesAgenda";
+import PrimeraConfiguracion from "./PrimeraConfiguracion";
 import { DAY_START, DAY_END, diaSemanaKey, minutosDesdeHHMM, ausenciaEnFecha, tieneCitasEseDia, indiceSemanaRotativa, excepcionEnFecha, horarioDelDia, trabajaEseDia } from "../lib/horarios";
 import { nombreNegocioDe, limpiarNombre, NEGOCIO_POR_DEFECTO, partesDelNombre, letraLogo, datosMarcaParaCache, aplicarMarcaEnPagina, ACENTO_POR_DEFECTO } from "../lib/negocio";
 import { horarioCambio } from "../lib/ghlHorarios";
@@ -692,7 +694,7 @@ export default function ClinicApp() {
         const partes = [];
         if (nuevas) partes.push(nuevas === 1 ? "1 cita nueva" : `${nuevas} citas nuevas`);
         if (cambiadas) partes.push(cambiadas === 1 ? `1 cita cambiada (${d.actualizadas[0].resumen.replace(/^Reserva /, "").replace(/ en GHL/, "")})` : `${cambiadas} citas cambiadas`);
-        if (borradas) partes.push(borradas === 1 ? `1 cita eliminada en GHL (${d.eliminadas[0].clienta}, cancelada aquí)` : `${borradas} citas eliminadas en GHL (canceladas aquí)`);
+        if (borradas) partes.push(borradas === 1 ? `1 cita cancelada o eliminada en GHL (${d.eliminadas[0].clienta}, quitada de la agenda)` : `${borradas} citas canceladas o eliminadas en GHL (quitadas de la agenda)`);
         showToast(`Desde GHL: ${partes.join(" y ")}.`);
       } catch (e) {
         // sin conexión: se reintenta en el siguiente ciclo
@@ -1290,6 +1292,41 @@ export default function ClinicApp() {
     }, "No se pudo guardar el objetivo. ¿Has pegado el esquema nuevo en Supabase?");
   }
   // aviso rojo en el menú: tests obligatorios de esta semana sin aprobar (solo para las empleadas)
+  // «Primera configuración»: en una instalación nueva, al entrar el administrador (con el código de ejemplo) se le pide lo básico una vez
+  const [instalacion, setInstalacion] = useState(null); // null = sin mirar; { pendiente, usuario }
+  useEffect(() => {
+    if (!currentUser || currentUser.rol !== "admin") return undefined;
+    let parado = false;
+    fetch("/api/instalacion", { cache: "no-store" }).then((r) => r.json()).then((d) => { if (!parado) setInstalacion(d); }).catch(() => {});
+    return () => { parado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, currentUser?.rol]);
+
+  // Circulito de «citas nuevas» en el menú Agenda: las que entran (reserva online, bot de IA, GHL u otra persona) desde la última vez que se
+  // abrió la Agenda. Al abrirla se pone a cero y vuelve a contar las que vayan entrando. Se recuerda en este navegador para cada persona.
+  const [marcaAgenda, setMarcaAgenda] = useState("");
+  const guardarMarcaAgenda = useCallback((m) => {
+    if (!m || !currentUser) return;
+    setMarcaAgenda(m);
+    try { window.localStorage.setItem(claveMarca(currentUser.id), m); } catch (e) { /* sin almacenamiento: solo dura esta sesión */ }
+  }, [currentUser?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!currentUser || loading) return;
+    let guardada = "";
+    try { guardada = window.localStorage.getItem(claveMarca(currentUser.id)) || ""; } catch (e) { guardada = ""; }
+    if (guardada) setMarcaAgenda(guardada);
+    else guardarMarcaAgenda(marcaVistas(appointments) || new Date().toISOString()); // la primera vez se empieza a contar desde ahora
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id, loading]);
+  // Con la Agenda abierta (y a la vista) todo lo que entra queda visto
+  useEffect(() => {
+    if (view !== "agenda" || !currentUser || loading) return;
+    if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    const m = marcaVistas(appointments);
+    if (m && (!marcaAgenda || Date.parse(m) > Date.parse(marcaAgenda))) guardarMarcaAgenda(m);
+  }, [view, appointments, currentUser?.id, loading, marcaAgenda, guardarMarcaAgenda]);
+  const nuevasAgenda = view === "agenda" ? 0 : citasNuevas(appointments, { marca: marcaAgenda, usuarioId: currentUser?.id }).length;
+
   const testsPendientesMios = !currentUser || currentUser.rol === "admin" ? 0 : testsPendientes({ lecciones, resultados: resultadosCursos, empleadaId: currentUser.id, semana: lunesDeCursos(todayISO()) }).length;
 
   // ---- Productos: exportar e importar ----
@@ -1598,13 +1635,18 @@ export default function ClinicApp() {
     return <LoginScreen onLogin={login} aviso={avisoLogin} negocio={negocio} />;
   }
 
+  if (instalacion?.pendiente && currentUser.rol === "admin") {
+    return <PrimeraConfiguracion nombreActual={instalacion.usuario?.nombre || currentUser.nombre || ""} onHecho={() => window.location.reload()} onSalir={() => logout()} />;
+  }
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "transparent", fontFamily: "Outfit, sans-serif", color: "var(--text)" }}>
       <Sidebar
         view={view}
         setView={navegar}
         currentUser={currentUser}
-        badges={{ cursos: testsPendientesMios, agenda: citasPorRevisar(appointments, todayISO()).length }}
+        badges={{ cursos: testsPendientesMios, agenda: nuevasAgenda }}
+        badgesAviso={{ agenda: citasPorRevisar(appointments, todayISO()).length }}
         negocio={negocio}
         isMobile={isMobile}
         open={sidebarOpen}
@@ -2517,6 +2559,7 @@ export default function ClinicApp() {
           currentUser={currentUser}
           onMas={() => setSidebarOpen(true)}
           onNueva={() => setMenuAnadir(true)}
+          badges={{ agenda: nuevasAgenda }}
         />
       )}
     </div>
@@ -2729,7 +2772,7 @@ function PinConfirmModal({ title, subtitle, empleadaId, onSuccess, onCancel }) {
 // Barra superior: hamburguesa (móvil), notificaciones, usuario
 // ---------------------------------------------------------------------------
 
-function BottomNav({ view, setView, currentUser, onNueva, onMas }) {
+function BottomNav({ view, setView, currentUser, onNueva, onMas, badges = {} }) {
   const candidatos = [
     { id: "inicio", label: "Inicio", icon: Home, ok: true },
     { id: "agenda", label: "Agenda", icon: CalendarDays, ok: puedeVer(currentUser, "agenda") },
@@ -2756,9 +2799,10 @@ function BottomNav({ view, setView, currentUser, onNueva, onMas }) {
       >
         <span
           aria-hidden="true"
-          style={{ width: 46, height: 28, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", background: active ? "rgba(var(--accent-rgb),0.2)" : "transparent", transition: "background .2s ease" }}
+          style={{ position: "relative", width: 46, height: 28, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", background: active ? "rgba(var(--accent-rgb),0.2)" : "transparent", transition: "background .2s ease" }}
         >
           <Icon size={20} strokeWidth={active ? 2.2 : 1.8} />
+          {badges[it.id] > 0 && <span data-badge-movil={it.id} style={{ position: "absolute", top: -4, right: 2, background: "#DC2626", color: "#fff", borderRadius: 999, fontSize: 10.5, fontWeight: 700, minWidth: 18, height: 18, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 5px", boxShadow: "0 0 0 2px var(--bar-bg)" }}>{badges[it.id]}</span>}
         </span>
         {it.label}
       </button>
@@ -2927,7 +2971,7 @@ function NotificacionesDropdown({ notificaciones, employees, onClose }) {
 // Sidebar (cajón deslizante en móvil, fija en escritorio)
 // ---------------------------------------------------------------------------
 
-function Sidebar({ view, setView, currentUser, isMobile, open, onClose, badges = {}, negocio = NEGOCIO_POR_DEFECTO }) {
+function Sidebar({ view, setView, currentUser, isMobile, open, onClose, badges = {}, badgesAviso = {}, negocio = NEGOCIO_POR_DEFECTO }) {
   const marca = partesDelNombre(negocio);
   const items = [
     { id: "inicio", label: "Inicio", icon: Home, always: true },
@@ -3074,7 +3118,12 @@ function Sidebar({ view, setView, currentUser, isMobile, open, onClose, badges =
               <Icon size={18} strokeWidth={1.8} />
             </span>
             {label}
-            {badges[id] > 0 && <span data-badge={id} aria-label={`${badges[id]} pendiente${badges[id] === 1 ? "" : "s"}`} style={{ marginLeft: "auto", background: "#DC2626", color: "#fff", borderRadius: 999, fontSize: 11.5, fontWeight: 700, minWidth: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{badges[id]}</span>}
+            {(badges[id] > 0 || badgesAviso[id] > 0) && (
+              <span style={{ marginLeft: "auto", display: "inline-flex", gap: 4 }}>
+                {badgesAviso[id] > 0 && <span data-badge-aviso={id} title={`${badgesAviso[id]} por revisar`} aria-label={`${badgesAviso[id]} por revisar`} style={{ background: "#F59E0B", color: "#fff", borderRadius: 999, fontSize: 11.5, fontWeight: 700, minWidth: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{badgesAviso[id]}</span>}
+                {badges[id] > 0 && <span data-badge={id} title={id === "agenda" ? `${badges[id]} cita${badges[id] === 1 ? " nueva" : "s nuevas"}` : undefined} aria-label={id === "agenda" ? `${badges[id]} cita${badges[id] === 1 ? " nueva" : "s nuevas"}` : `${badges[id]} pendiente${badges[id] === 1 ? "" : "s"}`} style={{ background: "#DC2626", color: "#fff", borderRadius: 999, fontSize: 11.5, fontWeight: 700, minWidth: 20, height: 20, display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{badges[id]}</span>}
+              </span>
+            )}
           </button>
         );
       })}

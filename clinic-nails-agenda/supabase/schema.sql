@@ -176,21 +176,23 @@ create policy "avatars lectura publica" on storage.objects for select using (buc
 --
 -- ⚠️ IMPORTANTE — CÓDIGOS DE EJEMPLO: cámbialos en cuanto entres a la app
 -- (Empleadas → editar → Código). Aquí solo son un punto de partida:
---   Eduardo (admin) → 0000
---   Génesis         → 1111
---   Silvia          → 2222
+--   Eduardo (admin) → 00000
+--   Génesis         → 11111
+--   Silvia          → 22222
+-- En una instalación nueva, al entrar con 00000 la app abre la «Primera configuración»
+-- (nombre del negocio, tu nombre y tu código nuevo, y si quieres borrar estos ejemplos).
 
 insert into empleadas (id, nombre, telefono, activa, color, horario, dias_libres, servicios, codigo, rol, permisos) values
   ('eduardo', 'Eduardo', '', true, '#292521',
-   '{}', '[]', '[]', '0000', 'admin',
+   '{}', '[]', '[]', '00000', 'admin',
    '{"agenda":true,"fichajes":true,"empleadas":true,"servicios":true,"cabinas":true,"clientes":true,"productos":true,"ventas":true}'),
   ('genesis', 'Génesis', '624 09 82 55', true, '#B4863C',
    '{"lun":{"activo":true,"inicio":"10:00","fin":"21:00"},"mar":{"activo":true,"inicio":"10:00","fin":"21:00"},"mie":{"activo":true,"inicio":"10:00","fin":"21:00"},"jue":{"activo":true,"inicio":"10:00","fin":"21:00"},"vie":{"activo":true,"inicio":"10:00","fin":"21:00"},"sab":{"activo":true,"inicio":"10:00","fin":"15:00"},"dom":{"activo":false,"inicio":"","fin":""}}',
-   '["dom"]', '["skin","dermapen","manicura","pedicura"]', '1111', 'empleada',
+   '["dom"]', '["skin","dermapen","manicura","pedicura"]', '11111', 'empleada',
    '{"agenda":true,"fichajes":true,"empleadas":false,"servicios":false,"cabinas":false,"clientes":false,"productos":false,"ventas":false}'),
   ('silvia', 'Silvia', '624 09 82 55', true, '#7C5A2E',
    '{"lun":{"activo":true,"inicio":"10:00","fin":"21:00"},"mar":{"activo":true,"inicio":"10:00","fin":"21:00"},"mie":{"activo":true,"inicio":"10:00","fin":"21:00"},"jue":{"activo":true,"inicio":"10:00","fin":"21:00"},"vie":{"activo":true,"inicio":"10:00","fin":"21:00"},"sab":{"activo":true,"inicio":"10:00","fin":"15:00"},"dom":{"activo":false,"inicio":"","fin":""}}',
-   '["dom"]', '["skin","eternal","slim"]', '2222', 'empleada',
+   '["dom"]', '["skin","eternal","slim"]', '22222', 'empleada',
    '{"agenda":true,"fichajes":true,"empleadas":false,"servicios":false,"cabinas":false,"clientes":false,"productos":false,"ventas":false}')
 on conflict (id) do nothing;
 

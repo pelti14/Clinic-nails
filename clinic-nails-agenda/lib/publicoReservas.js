@@ -6,6 +6,7 @@ import { registrarActividad } from "./actividadServidor";
 import { elegirCabina, telefonoClave, fechaYMinutosMadrid } from "./agenda";
 import { horarioDelDia } from "./horarios";
 import { nombreNegocioDe, NEGOCIO_POR_DEFECTO } from "./negocio";
+import { normalizarContacto } from "./contacto";
 import { citaIdDeCodigo, enlaceDeCita } from "./enlaceCita";
 import { sumarDias } from "./cursos";
 import { normalizarAjustesReservas, validarDatosReserva, serviciosReservables, empleadasPara, empleadasReservables, huecosReservables, fechaReservable, asignarEmpleada, duracionTotal, precioTotal, citasFuturasDe, puedeCancelar, normalizarEmail, serviciosRecomendados } from "./reservaOnline";
@@ -39,7 +40,7 @@ export async function cargarContexto(supabase, { ahoraMs = Date.now() } = {}) {
     const r = await supabase.from("citas").select("servicio_id, servicios_extra, fecha, asistencia").gte("fecha", sumarDias(hoy, -90)).lte("fecha", hoy);
     if (!r.error) citasRecientes = (r.data || []).map(mapCita);
   }
-  return { reservas, hoy, negocio: nombreNegocioDe({ negocio: ajustes.negocio }) || NEGOCIO_POR_DEFECTO, servicios: (sv.data || []).map(mapServicio), empleadas: (em.data || []).map(mapEmpleada), cabinas: (cb.data || []).map((c) => ({ id: c.id, activa: c.activa !== false })), categorias, citasRecientes };
+  return { reservas, hoy, negocio: nombreNegocioDe({ negocio: ajustes.negocio }) || NEGOCIO_POR_DEFECTO, contacto: normalizarContacto(ajustes.negocio), servicios: (sv.data || []).map(mapServicio), empleadas: (em.data || []).map(mapEmpleada), cabinas: (cb.data || []).map((c) => ({ id: c.id, activa: c.activa !== false })), categorias, citasRecientes };
 }
 
 // Lo único que ve cualquiera que abra la página: nada de datos internos
@@ -52,7 +53,7 @@ export function catalogoPublico(ctx) {
   const posicion = new Map((ctx.categorias || []).map((c) => [c.nombre, c.orden]));
   const categorias = [...new Set(reservables.map((s) => s.categoria).filter(Boolean))].sort((a, b) => (posicion.has(a) ? posicion.get(a) : 1e6) - (posicion.has(b) ? posicion.get(b) : 1e6) || a.localeCompare(b, "es"));
   return {
-    ok: true, activo: ctx.reservas.activas, negocio: ctx.negocio, bienvenida: ctx.reservas.bienvenida, privacidadUrl: ctx.reservas.privacidadUrl, maxDias: ctx.reservas.maxDias,
+    ok: true, activo: ctx.reservas.activas, negocio: ctx.negocio, contacto: ctx.contacto || normalizarContacto(), bienvenida: ctx.reservas.bienvenida, privacidadUrl: ctx.reservas.privacidadUrl, maxDias: ctx.reservas.maxDias,
     recomendados, categorias: ctx.reservas.activas ? categorias : [],
     servicios: ctx.reservas.activas ? reservables.map((s) => ({ id: s.id, nombre: s.nombre, descripcion: s.descripcion, categoria: s.categoria, duracion: s.duracion, precio: s.precio })) : [],
     empleadas: ctx.reservas.activas ? empleadasReservables(ctx.empleadas).map((e) => ({ id: e.id, nombre: e.nombre, servicios: hacen(e) })).filter((e) => e.servicios.length) : [],
@@ -223,7 +224,7 @@ export async function citaPorCodigo(ctx, supabase, { codigo }, ahoraMs = Date.no
   const { hoy, minutos } = ahoraMadrid(ahoraMs);
   const estado = estadoDeCita(c, hoy, minutos);
   const margen = estado === "activa" && puedeCancelar({ fecha: c.fecha, inicio: c.inicio, hoy, ahoraMin: minutos, horas: ctx.reservas.cancelarHoras });
-  return { ok: true, negocio: ctx.negocio, cancelarHoras: ctx.reservas.cancelarHoras, maxDias: ctx.reservas.maxDias, cliente: { nombre: String(g.cliente?.nombre || "").trim().split(/\s+/)[0] || "" }, cita: { id: c.id, fecha: c.fecha, hora: hhmm(c.inicio), inicio: c.inicio, duracion: c.duracion, servicios: nombresDe(ctx, c), empleada: ctx.empleadas.find((e) => e.id === c.empleadaId)?.nombre || "", estado, puedeCambiar: margen, puedeCancelar: margen } };
+  return { ok: true, negocio: ctx.negocio, contacto: ctx.contacto || normalizarContacto(), cancelarHoras: ctx.reservas.cancelarHoras, maxDias: ctx.reservas.maxDias, cliente: { nombre: String(g.cliente?.nombre || "").trim().split(/\s+/)[0] || "" }, cita: { id: c.id, fecha: c.fecha, hora: hhmm(c.inicio), inicio: c.inicio, duracion: c.duracion, servicios: nombresDe(ctx, c), empleada: ctx.empleadas.find((e) => e.id === c.empleadaId)?.nombre || "", estado, puedeCambiar: margen, puedeCancelar: margen } };
 }
 
 export async function cancelarPublico(ctx, supabase, { token, citaId, codigo }, { ahoraMs = Date.now(), sincronizar } = {}) {

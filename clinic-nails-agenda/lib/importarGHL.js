@@ -11,7 +11,7 @@ import { randomUUID } from "crypto";
 import { supabase } from "./servidorDb";
 import { registrarActividad } from "./actividadServidor";
 import { actualizarEnlaceCitaGHL } from "./ghlEnlaceCita";
-import { configActual, configurado, listarEventos, comprobarCitaGHL, obtenerContacto, listarCamposPersonalizadosGHL, actualizarCitaGHL, vaciarCampoContactoGHL } from "./ghl";
+import { configActual, configurado, listarEventos, comprobarCitaGHL, obtenerContacto, listarCamposPersonalizadosGHL, actualizarCitaGHL, vaciarCampoContactoGHL, eliminarCitaGHL } from "./ghl";
 import { valorCampoServicio, campoServicio, serviciosDelCampo } from "./ghlServicioCampo";
 import { decidir, estadoApp, resumenCambioGHL } from "./ghlReconciliar";
 import {
@@ -21,6 +21,8 @@ import {
   elegirServicioPorTitulo,
   telefonoClave,
   soloDigitos,
+  MARCA_REVISAR,
+  quitarMarcaRevisar,
 } from "./agenda";
 
 // La agenda cubre todo el día (00:00–24:00): se importan citas a cualquier hora
@@ -62,6 +64,11 @@ export async function importarCitasDeGHL({ dias = 60, ahora = Date.now(), baseUr
     leerTodo("citas", "*", (q) => q.gte("fecha", fechaDesde)), // «*»: incluye la última versión sincronizada (ghl_snapshot) si existe
     leerTodo("clientes", "id, nombre, telefono, email, ghl_contact_id"),
   ]);
+
+  // Citas canceladas en GHL (por el bot de IA o a mano): se quitan de la agenda (Configuración → Conexiones; activado por defecto)
+  const { data: ajusteImportacion } = await supabase.from("ajustes").select("valor").eq("clave", "importacion").maybeSingle();
+  const borrarCanceladas = ajusteImportacion?.valor?.borrarCanceladas !== false;
+  const porBorrar = []; // { cita, ghlEventId, motivo }
 
   const servicios = serviciosRows.map((r) => ({ id: r.id, nombre: r.nombre, categoria: r.categoria || "", activo: r.activo, empleadas: r.empleadas || [], cabina: r.cabina || "cualquiera", duracion: Number(r.duracion) || 0 }));
   const cabinas = cabinasRows.map((r) => ({ id: r.id, activa: r.activa }));
@@ -149,6 +156,8 @@ export async function importarCitasDeGHL({ dias = 60, ahora = Date.now(), baseUr
       cambios.asistencia = asistencia;
       detalle.push({ campo: "asistencia", antes: cita.asistencia, despues: asistencia });
     }
+    // Cancelada en GHL (y sin ningún otro cambio pendiente de la app): se borra de la agenda en vez de dejarla «cancelada»
+    if (borrarCanceladas && d.aplicar.cancelada === true) return void porBorrar.push({ cita, ghlEventId: ev.id, motivo: "cancelada" });
     const { error } = await supabase.from("citas").update(cambios).eq("id", cita.id);
     if (error) return void resultado.errores.push(`No se pudo actualizar «${cita.clienta}» con el cambio de GHL: ${error.message}`);
     const resumen = resumenCambioGHL(cita, d.aplicar);
@@ -344,6 +353,55 @@ export async function importarCitasDeGHL({ dias = 60, ahora = Date.now(), baseUr
     resultado.importadas.push({ id: fila.id, fecha, hora: hhmm(minutos), empleada: emp.nombre, clienta: nombreCliente, servicio: servicio.nombre, servicioPorTitulo: porTitulo, servicioDesde, titulo });
   }
 
+  // ---- Segunda mirada al campo «Servicio» ----
+  // El bot de IA crea la cita y rellena el campo «Servicio» en dos pasos, y el aviso de GHL llega con la cita: muchas veces la app la importa
+  // ANTES de que el bot escriba el servicio y la deja «por revisar». Durante las 24 h siguientes a crearse, en cada sincronización se vuelve a
+  // mirar el campo del contacto: si ya trae el servicio, se pone solo (con su duración y su cabina) y se corrige en GHL, como si hubiera llegado a tiempo.
+  const eventoPorId = new Map(eventos.filter(({ ev }) => ev.id).map((x) => [x.ev.id, x]));
+  const hoyF = fechaYMinutosMadrid(ahora).fecha;
+  const segundaMirada = citas.filter((c) => {
+    const notas = String(c.notas || "");
+    const creada = Date.parse(c.created_at || "");
+    return !porBorrar.some((x) => x.cita === c) && c.ghl_event_id && notas.startsWith("📥 Reservada desde GoHighLevel") && notas.includes(MARCA_REVISAR) && !/dice «/.test(notas) && c.asistencia !== "cancelada" && c.estado_cobro !== "cobrada" && c.fecha >= hoyF && Number.isFinite(creada) && ahora - creada < 24 * 3600 * 1000 && eventoPorId.get(c.ghl_event_id)?.ev.contactId;
+  });
+  for (const c of segundaMirada.slice(0, 10)) {
+    const { ev, calId } = eventoPorId.get(c.ghl_event_id);
+    const emp = empleadas.find((e) => e.id === c.empleada_id);
+    let valor = "";
+    try { valor = valorCampoServicio(await leerContacto(ev.contactId), await camposDeContacto()); } catch (err) { continue; }
+    if (!valor) continue;
+    const r = serviciosDelCampo(valor, servicios, emp);
+    const base = quitarMarcaRevisar(c.notas);
+    if (!r.porTitulo || !r.servicios.length) {
+      // el bot escribió algo que no coincide: se deja por revisar, pero ahora se ve qué escribió
+      const nota = `${base} Revisa el servicio: el campo «Servicio» del contacto dice «${valor}» y no coincide con ninguno; se ha puesto uno por defecto.`.trim();
+      const { error } = await supabase.from("citas").update({ notas: nota }).eq("id", c.id);
+      if (!error) c.notas = nota;
+      continue;
+    }
+    const [servicio, ...extras] = r.servicios;
+    const total = r.servicios.reduce((m, sv) => m + (Number(sv.duracion) || 0), 0);
+    const duracion = total > 0 ? Math.min(total, DAY_END - c.inicio) : c.duracion;
+    const cabinaId = elegirCabina(servicio, cabinas, citas.filter((x) => x.fecha === c.fecha && x.id !== c.id && x.asistencia !== "cancelada"), c.inicio, duracion, c.cabina_id) || c.cabina_id;
+    const nota = `${base} Servicio tomado del campo «Servicio» del contacto («${valor}»; el bot lo escribió justo después de reservar).`.trim();
+    const cambios = { servicio_id: servicio.id, servicios_extra: extras.map((sv) => sv.id), duracion, cabina_id: cabinaId, notas: nota };
+    const { error } = await supabase.from("citas").update(cambios).eq("id", c.id);
+    if (error) { resultado.errores.push(`No se pudo poner el servicio del bot a «${c.clienta}»: ${error.message}`); continue; }
+    const antes = c.duracion;
+    Object.assign(c, cambios, { cabinaId });
+    const nombres = r.servicios.map((sv) => sv.nombre).join(" + ");
+    const resumen = `Reserva del bot: servicio recibido de GHL (${nombres}) para ${c.clienta || "sin nombre"}`;
+    resultado.actualizadas.push({ id: c.id, clienta: c.clienta, cambios: ["servicio"], resumen });
+    await registrarActividad([{ usuario_id: null, usuario_nombre: "GHL (reserva online / IA)", origen: "ghl", entidad: "cita", entidad_id: c.id, cliente_id: c.cliente_id || null, accion: "editar", resumen, detalle: { campoServicio: valor, servicio: nombres, duracionAntes: antes, duracion, ghlEventId: c.ghl_event_id } }]);
+    try {
+      await actualizarCitaGHL(c.ghl_event_id, { calendarId: (ev.calendarId || calId || "").trim(), fecha: c.fecha, inicio: c.inicio, duracion, titulo: `${nombres} – ${c.clienta || "Cliente"}` });
+      await guardarSnapshot(c, { ...(c.ghl_snapshot || {}), fecha: c.fecha, inicio: c.inicio, duracion, empleada_id: c.empleada_id, cancelada: false });
+    } catch (err) {
+      resultado.errores.push(`«${c.clienta}»: el servicio del bot ya está en la agenda, pero no se pudo corregir en GHL (duración ${antes} → ${duracion} min): ${err.message}`);
+    }
+    try { await vaciarCampoContactoGHL(ev.contactId, campoServicio(await camposDeContacto())?.id); } catch (err) { /* la próxima reserva lo intentará igual */ }
+  }
+
   // ---- Citas BORRADAS en GHL ----
   // Una cita borrada en GHL ya no sale en su lista, así que antes se quedaba para siempre en la agenda. Para no cancelar nada por error,
   // solo se mira si TODOS los calendarios se leyeron bien, solo las citas con vínculo, sin cobrar, de hoy en adelante y de un calendario que
@@ -355,12 +413,46 @@ export async function importarCitasDeGHL({ dias = 60, ahora = Date.now(), baseUr
     const candidatas = [...citaPorEvento.values()].filter((c) => c.ghl_event_id && !vistos.has(c.ghl_event_id) && !bloqueosPorEvento.has(c.ghl_event_id) && c.estado_cobro !== "cobrada" && c.asistencia !== "cancelada" && c.fecha >= fechaDesde && c.fecha <= fechaHasta && calendarios.has((c.ghl_calendar_id || "").trim()));
     for (const c of candidatas.slice(0, 25)) {
       if ((await comprobarCitaGHL(c.ghl_event_id)) !== "borrada") continue;
+      if (borrarCanceladas) { porBorrar.push({ cita: c, ghlEventId: null, motivo: "borrada" }); continue; }
       const nota = `${c.notas || ""} 🗑️ Eliminada en GoHighLevel.`.trim();
       const { error } = await supabase.from("citas").update({ asistencia: "cancelada", ghl_event_id: null, ghl_snapshot: null, notas: nota }).eq("id", c.id);
       if (error) { resultado.errores.push(`No se pudo cancelar «${c.clienta}» (borrada en GHL): ${error.message}`); continue; }
       Object.assign(c, { asistencia: "cancelada", ghl_event_id: null, ghl_snapshot: null, notas: nota });
       resultado.eliminadas.push({ id: c.id, clienta: c.clienta, fecha: c.fecha, hora: hhmm(c.inicio) });
       await registrarActividad([{ usuario_id: null, usuario_nombre: "GHL (reserva online / IA)", origen: "ghl", entidad: "cita", entidad_id: c.id, cliente_id: c.cliente_id || null, accion: "cancelar", resumen: `Cita eliminada en GHL: ${c.clienta || "sin nombre"} el ${c.fecha} a las ${hhmm(c.inicio)} (cancelada también aquí)`, detalle: { fecha: c.fecha, hora: hhmm(c.inicio), ghlEventId: "borrado" } }]);
+    }
+  }
+
+  // ---- Quitar de la agenda las citas canceladas o borradas en GHL ----
+  // La cita ya está cancelada en GHL (su automatización de «cita cancelada» ya se ha lanzado): se borra de la agenda y, a los 3 segundos,
+  // también de GHL, igual que cuando se elimina una cita desde la app. Nunca una cobrada ni una con sesiones de bono usadas (esas se quedan canceladas).
+  const borrarEnGHL = [];
+  for (const { cita: c, ghlEventId, motivo } of porBorrar) {
+    let conBono = false;
+    try { const u = await supabase.from("bono_usos").select("id").eq("cita_id", c.id).limit(1); conBono = !u.error && (u.data || []).length > 0; } catch (e) { conBono = false; }
+    const cuando = `${c.fecha} a las ${hhmm(c.inicio)}`;
+    if (conBono) {
+      // se queda como «cancelada» (no se pierde el uso del bono)
+      const nota = `${c.notas || ""} ${motivo === "borrada" ? "🗑️ Eliminada en GoHighLevel." : ""}`.trim();
+      const { error } = await supabase.from("citas").update({ asistencia: "cancelada", ...(motivo === "borrada" ? { ghl_event_id: null, ghl_snapshot: null } : {}), notas: nota }).eq("id", c.id);
+      if (error) { resultado.errores.push(`No se pudo cancelar «${c.clienta}»: ${error.message}`); continue; }
+      if (motivo !== "borrada") await guardarSnapshot(c, { fecha: c.fecha, inicio: c.inicio, duracion: c.duracion, empleada_id: c.empleada_id, cancelada: true });
+      resultado.actualizadas.push({ id: c.id, clienta: c.clienta, cambios: ["cancelada"], resumen: `Reserva cancelada en GHL: ${c.clienta || "sin nombre"} (tiene bono: se queda cancelada)` });
+      await registrarActividad([{ usuario_id: null, usuario_nombre: "GHL (reserva online / IA)", origen: "ghl", entidad: "cita", entidad_id: c.id, cliente_id: c.cliente_id || null, accion: "asistencia", resumen: `Cita cancelada en GHL: ${c.clienta || "sin nombre"} el ${cuando} (usa un bono: se queda como cancelada)`, detalle: { fecha: c.fecha, hora: hhmm(c.inicio), ghlEventId: c.ghl_event_id } }]);
+      continue;
+    }
+    const { error } = await supabase.from("citas").delete().eq("id", c.id);
+    if (error) { resultado.errores.push(`No se pudo quitar de la agenda «${c.clienta}» (${motivo} en GHL): ${error.message}`); continue; }
+    c.asistencia = "cancelada"; // para el resto de esta vuelta, como si no estuviera
+    resultado.eliminadas.push({ id: c.id, clienta: c.clienta, fecha: c.fecha, hora: hhmm(c.inicio), motivo });
+    await registrarActividad([{ usuario_id: null, usuario_nombre: "GHL (reserva online / IA)", origen: "ghl", entidad: "cita", entidad_id: c.id, cliente_id: c.cliente_id || null, accion: "eliminar", resumen: `Cita ${motivo === "borrada" ? "eliminada" : "cancelada"} en GHL: ${c.clienta || "sin nombre"} el ${cuando} (quitada de la agenda)`, detalle: { fecha: c.fecha, hora: hhmm(c.inicio), empleadaId: c.empleada_id, servicioId: c.servicio_id, notas: c.notas || "", ghlEventId: c.ghl_event_id || "borrado" } }]);
+    if (ghlEventId) borrarEnGHL.push(ghlEventId);
+  }
+  if (borrarEnGHL.length) {
+    const ms = Number(process.env.GHL_ESPERA_CANCELAR_MS ?? 3000);
+    await new Promise((ok) => setTimeout(ok, Number.isFinite(ms) ? Math.min(Math.max(ms, 0), 10000) : 3000));
+    for (const idEv of borrarEnGHL) {
+      try { await eliminarCitaGHL(idEv); } catch (err) { resultado.errores.push(`La cita cancelada ya no está en la agenda, pero no se pudo borrar de GHL: ${err.message}`); }
     }
   }
 

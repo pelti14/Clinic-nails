@@ -20,9 +20,9 @@ señal de que hace falta volver a pegar este script.
 2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**.
    Esto crea las tablas y mete datos de ejemplo, incluidos tres códigos
    de prueba:
-   - **Eduardo (admin)** → `0000`
-   - **Génesis** → `1111`
-   - **Silvia** → `2222`
+   - **Eduardo (admin)** → `00000`
+   - **Génesis** → `11111`
+   - **Silvia** → `22222`
 
    ⚠️ Cámbialos en cuanto entres (pantalla Empleadas → editar → Código).
 3. **Project Settings → API** → copia "Project URL" y "anon public" key.
@@ -1283,6 +1283,55 @@ Todo pasa por el servidor de la app, que comprueba quién eres y qué puedes hac
 - **Tu clave de GHL (`pit-…`) se ha compartido en conversaciones y viajó en versiones anteriores del
   paquete. Genera una nueva en GHL (Settings → Private Integrations) y pégala en Configuración →
   Conexiones; anula la antigua.**
+
+## Contacto y mapa para las clientas, citas nuevas, bot y nuevas instalaciones
+
+### Teléfono, WhatsApp, dirección y mapa (Configuración → Negocio)
+- Nuevo apartado **«Contacto y dirección (para las clientas)»**: teléfono para llamar, WhatsApp, dirección del centro y el
+  enlace de «Compartir» de Google Maps. Todo opcional: lo que se deja vacío no se enseña.
+- Sale en **el enlace de cada cita** (`/reservar/cita/…`) y en **la página de reservas** (`/reservar`): bloque «Dónde estamos»
+  con el **mapa**, botones **«Cómo llegar (Google Maps)»** y **«Mapas de iPhone»**, y «Ver … en Google Maps» (tu ficha con reseñas).
+- Cuando la cita ya no se puede cambiar desde el enlace (menos horas que «Cancelar hasta»), el aviso «llámanos» lleva el número
+  y los botones **Llamar** y **WhatsApp** (con el mensaje ya escrito: día, hora y servicio de la cita).
+- El mapa se dibuja con la dirección escrita (el enlace corto de Google no se puede incrustar). No hace falta clave de Google.
+
+### Circulito de citas nuevas en «Agenda»
+- El menú **Agenda** lleva un **círculo rojo con el número de citas nuevas** que han entrado desde la última vez que la abriste:
+  reservas online, bot de IA, GHL o creadas por otra persona (las tuyas no cuentan, las canceladas tampoco).
+- Al abrir la Agenda se pone a cero y vuelve a contar las que vayan entrando. También sale en la barra de abajo del móvil.
+- Las reservas **por revisar** del bot se ven ahora en un círculo **naranja** aparte (no se borra al abrir la Agenda: se quita al revisarlas).
+- Se recuerda en cada navegador y para cada persona.
+
+### El bot de IA y el campo «Servicio»
+- **Por qué llegaban sin servicio:** el bot crea la cita y rellena el campo «Servicio» en dos pasos, y la agenda importaba la cita
+  en cuanto GHL avisaba, **antes** de que el bot escribiera el servicio. Ahora, durante las 24 h siguientes, en cada sincronización
+  (cada minuto con la agenda abierta) **se vuelve a mirar el campo**: si ya trae el servicio, la cita se corrige sola (servicio,
+  duración, cabina, y título y duración en GHL) y sale de «Por revisar». Si trae un texto que no coincide, se queda por revisar
+  pero se ve qué escribió el bot.
+- En «Por revisar», cada reserva tiene **«Mirar ahora en GHL»**: dice qué pone en este momento el campo «Servicio» de ese contacto
+  (vacío = el bot no lo está rellenando; revisa la acción del bot que lo guarda) o si en GHL no existe ese campo.
+
+### Citas canceladas por el bot de GHL
+- Si una cita se cancela en GHL (por ejemplo, el bot de IA), ya no se queda como «cancelada» en la agenda: **se quita de la agenda**
+  y, a los 3 segundos, **también se borra de GHL** (su automatización de «cita cancelada» ya se ha lanzado). Igual con las que se
+  borran del todo en GHL. Queda apuntado en Actividad con los datos de la cita.
+- Nunca se borra una cita cobrada ni una que usa un bono: esas se quedan como canceladas.
+- Se puede desactivar en Configuración → Conexiones → «Citas que se crean en GHL» → «Quitar de la agenda las citas que se cancelan en GHL».
+- Las que cancelas tú desde la agenda o la clienta desde su enlace siguen igual que antes.
+
+### Llevar la agenda a otro negocio (instalación nueva)
+1. Crea un proyecto **nuevo** en Supabase y pega `supabase/schema.sql` en el SQL Editor → Run.
+2. Despliega este mismo código en el hosting nuevo (Vercel, Hostinger con Node…) con sus propias variables de entorno
+   (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`; ver `.env.local.example`).
+3. Entra con el código de ejemplo **00000**: se abre la **«Primera configuración»** (solo esa vez): nombre del negocio, teléfono,
+   dirección y mapa, **tu nombre y tu código nuevo**, y si empezar vacío (borra las empleadas y los servicios de ejemplo).
+4. Después: Empleados, Catálogo → Servicios, y Configuración → Conexiones (GHL) y Reservas online.
+- La «Primera configuración» **solo sale en una instalación nueva** (sin citas ni clientas). En una agenda que ya se usa, como esta,
+  no sale nunca: la primera vez que entra el administrador se marca como configurada sola.
+- **Corregido:** `schema.sql` creaba los códigos de ejemplo con 4 cifras (`0000`) y la app pide 5, así que en una instalación
+  nueva no se podía entrar. Ahora son `00000`, `11111` y `22222`. (No cambia nada en una base de datos que ya existe.)
+- Entre que despliegas y haces la primera configuración, cualquiera que conozca la dirección y el código de ejemplo podría entrar:
+  hazla nada más desplegar.
 
 ## Estructura del proyecto
 

@@ -119,6 +119,12 @@ export async function comprobarCitaGHL(ghlEventId) {
   }
 }
 
+// Una cita de GHL tal cual (para saber su contacto)
+export async function obtenerCitaGHL(ghlEventId) {
+  const data = await ghlFetch(`/calendars/events/appointments/${ghlEventId}`, { method: "GET" });
+  return data?.appointment || data?.event || data || null;
+}
+
 export async function listarEventos(calendarId, desdeMs, hastaMs) {
   const params = new URLSearchParams({
     locationId: CONFIG.locationId,

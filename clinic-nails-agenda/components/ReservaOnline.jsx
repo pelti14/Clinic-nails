@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { aplicarMarcaEnPagina } from "../lib/negocio";
 import { icsDeCita } from "../lib/reservaOnline";
 import { api, copiarTexto, diaLargo, eur, guardarPase, hoyMadrid, legible, leerPase, partesDia, primerNombre, sumar } from "../lib/publicoCliente";
+import ContactoCentro, { BotonesLlamar } from "./ContactoCentro";
 import CambiarCita from "./CambiarCita";
 
 const MUTED = "rgba(var(--ink-rgb),0.72)";
@@ -157,7 +158,7 @@ export default function ReservaOnline() {
   const caja = { maxWidth: 720, margin: "0 auto", padding: "20px 16px 60px" };
   if (fallo) return <main style={caja}><div role="alert" data-reserva-fallo="1" className="card" style={{ padding: 20 }}>{fallo}</div></main>;
   if (!cat) return <main style={caja}><p data-reserva-cargando="1" style={{ color: MUTED }}>Cargando…</p></main>;
-  if (!cat.activo) return <main style={caja}><h1 style={{ fontSize: 26 }}>{cat.negocio}</h1><div data-reserva-apagada="1" className="card" style={{ padding: 20 }}>Ahora mismo no se puede reservar online. Llámanos y te buscamos hueco.</div></main>;
+  if (!cat.activo) return <main style={caja}><h1 style={{ fontSize: 26 }}>{cat.negocio}</h1><div data-reserva-apagada="1" className="card" style={{ padding: 20 }}>Ahora mismo no se puede reservar online. Llámanos y te buscamos hueco.<BotonesLlamar contacto={cat.contacto} /></div><ContactoCentro negocio={cat.negocio} contacto={cat.contacto} conBotones={false} /></main>;
 
   const etiqueta = (t) => <div className="field-label">{t}</div>;
   const err = (c) => (errores[c] ? <div role="alert" data-error={c} style={{ color: "var(--danger)", fontSize: 13, marginTop: 4 }}>{errores[c]}</div> : null);
@@ -373,6 +374,7 @@ export default function ReservaOnline() {
           {!pase?.token && <p style={{ fontSize: 12.5, color: MUTED, marginTop: 12 }}>No has marcado «Recordarme», así que en este móvil no verás tus citas aquí. {hecho.enlace ? "Para cambiarla o cancelarla, usa el enlace de arriba o llámanos." : "Para cambiarla o cancelarla, llámanos."}</p>}
         </section>
       )}
+      <ContactoCentro negocio={cat.negocio} contacto={cat.contacto} />
     </main>
   );
 }

@@ -5,6 +5,8 @@
 
 import React, { useEffect, useState } from "react";
 import CambiarCita from "./CambiarCita";
+import ContactoCentro, { BotonesLlamar } from "./ContactoCentro";
+import { telefonoLegible } from "../lib/contacto";
 import { api, diaLargo, legible, primerNombre } from "../lib/publicoCliente";
 import { icsDeCita } from "../lib/reservaOnline";
 
@@ -41,6 +43,8 @@ export default function GestionarCita({ codigo }) {
   if (fallo) return <main style={caja}><div role="alert" data-cita-fallo="1" className="card" style={{ padding: 20 }}>{fallo}</div><p style={{ marginTop: 14 }}><a href="/reservar" data-reservar-nueva="1">Reservar una cita nueva</a></p></main>;
   if (!info) return <main style={caja}><p data-cita-cargando="1" style={{ color: MUTED }}>Cargando tu cita…</p></main>;
   const c = info.cita;
+  // Mensaje que ya va escrito al abrir WhatsApp
+  const mensajeWa = `Hola, os escribo por mi cita del ${diaLargo(c.fecha).toLowerCase()} a las ${c.hora}${c.servicios.length ? ` (${c.servicios.join(" + ")})` : ""}.`;
   const aviso = { cancelada: "Esta cita está cancelada.", pasada: "Esta cita ya ha pasado.", cobrada: "Esta cita ya está pagada: no se puede cambiar desde aquí." }[c.estado];
 
   return (
@@ -84,10 +88,14 @@ export default function GestionarCita({ codigo }) {
             {error && <div role="alert" data-error-cita="1" style={{ color: "var(--danger)", fontSize: 13.5, marginTop: 10 }}>{error}</div>}
           </div>
         ) : (
-          <div data-no-cambiable="1" className="card" style={{ padding: 14, marginTop: 14 }}>Para cambiarla o cancelarla con menos de {info.cancelarHoras} h de antelación, llámanos y lo vemos.</div>
+          <div data-no-cambiable="1" className="card" style={{ padding: 14, marginTop: 14 }}>
+            Para cambiarla o cancelarla con menos de {info.cancelarHoras} h de antelación, llámanos{info.contacto?.telefono ? ` al ${telefonoLegible(info.contacto.telefono)}` : ""} y lo vemos.
+            <BotonesLlamar contacto={info.contacto} mensaje={mensajeWa} />
+          </div>
         )
       )}
       {(c.estado === "cancelada" || hecho?.tipo === "cancelada") && <p style={{ marginTop: 16 }}><a href="/reservar" data-reservar-nueva="1">Reservar una cita nueva</a></p>}
+      <ContactoCentro negocio={info.negocio} contacto={info.contacto} mensaje={mensajeWa} conBotones={!(c.estado === "activa" && !hecho && !c.puedeCambiar)} />
     </main>
   );
 }

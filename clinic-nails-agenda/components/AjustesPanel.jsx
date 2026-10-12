@@ -7,6 +7,7 @@ import { PRESETS, TEMA_POR_DEFECTO, normalizarTema, esHex } from "../lib/theme";
 import { estadoSeguridad, cerrarTodasLasSesiones } from "../lib/authCliente";
 import { validarId, normalizarMarketing, EJEMPLOS, hayEtiquetas } from "../lib/etiquetas";
 import { normalizarAjustesReservas } from "../lib/reservaOnline";
+import { normalizarContacto, validarContacto, enlacesContacto, MAX_DIRECCION } from "../lib/contacto";
 import { nombreNegocioDe, limpiarNombre, validarNombre, partesDelNombre, letraLogo, faviconUrl, tituloPagina, NEGOCIO_POR_DEFECTO, MAX_NOMBRE, ACENTO_POR_DEFECTO } from "../lib/negocio";
 
 const MUTED = "rgba(var(--ink-rgb),0.74)";
@@ -63,7 +64,7 @@ function Negocio({ ajustes, onGuardarAjuste, showToast, acento }) {
     if (error || !cambiado) return;
     setGuardando(true);
     try {
-      await onGuardarAjuste("negocio", { nombre: limpio });
+      await onGuardarAjuste("negocio", { ...(ajustes?.negocio || {}), nombre: limpio });
       showToast(`Nombre del negocio guardado: «${limpio}». Ya se ve en el menú y en la pestaña del navegador.`, "ok");
     } catch (err) {
       /* guardarAjuste ya avisa del error */
@@ -99,7 +100,59 @@ function Negocio({ ajustes, onGuardarAjuste, showToast, acento }) {
         </div>
         <p style={{ margin: "14px 0 0", fontSize: 12.5, color: MUTED }}>El icono de la pestaña (favicon) se hace solo con las iniciales del nombre y el color de la marca (el de «Colores»), así que cambia cuando cambias cualquiera de los dos. Este nombre no cambia el de GHL, el de tus anuncios ni el de tus plantillas: solo el de esta agenda y sus mensajes.</p>
       </Seccion>
+      <ContactoNegocio ajustes={ajustes} onGuardarAjuste={onGuardarAjuste} showToast={showToast} />
     </div>
+  );
+}
+
+// Teléfono, WhatsApp, dirección y mapa: salen en la página de reservas y en el enlace de cada cita
+function ContactoNegocio({ ajustes, onGuardarAjuste, showToast }) {
+  const guardado = normalizarContacto(ajustes?.negocio);
+  const clave = JSON.stringify(guardado);
+  const [f, setF] = useState(guardado);
+  const [guardando, setGuardando] = useState(false);
+  useEffect(() => { setF(guardado); }, [clave]); // eslint-disable-line react-hooks/exhaustive-deps
+  const errores = validarContacto(f);
+  const hayError = Object.keys(errores).length > 0;
+  const cambiado = JSON.stringify(normalizarContacto(f)) !== clave;
+  const vista = enlacesContacto(f);
+  const campo = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const err = (k) => (errores[k] ? <div role="alert" data-error-contacto={k} style={{ color: "var(--danger)", fontSize: 13, marginTop: 4 }}>{errores[k]}</div> : null);
+  async function guardar() {
+    if (hayError || !cambiado) return;
+    setGuardando(true);
+    try {
+      await onGuardarAjuste("negocio", { ...(ajustes?.negocio || {}), ...normalizarContacto(f) });
+      showToast("Contacto y dirección guardados. Ya salen en la página de reservas y en el enlace de cada cita.", "ok");
+    } catch (e) { /* guardarAjuste ya avisa */ } finally { setGuardando(false); }
+  }
+  return (
+    <Seccion titulo="Contacto y dirección (para las clientas)" ayuda="Sale en la página de reservas y en el enlace de cada cita: botón de llamar, WhatsApp, la dirección con el mapa y «Cómo llegar» con Google Maps o Mapas de iPhone. Todo es opcional: lo que dejes vacío no se enseña.">
+      <div data-contacto-negocio="1">
+        <Campo etiqueta="Teléfono para llamar" ayuda="Por ejemplo: 986 123 456 o +34 600 123 456.">
+          <input className="input" type="tel" inputMode="tel" aria-label="Teléfono para llamar" data-campo-telefono="1" value={f.telefono} onChange={campo("telefono")} />
+          {err("telefono")}
+        </Campo>
+        <Campo etiqueta="WhatsApp (opcional)" ayuda="Si lo pones, sale un botón «WhatsApp» con el mensaje ya escrito. Puede ser el mismo número.">
+          <input className="input" type="tel" inputMode="tel" aria-label="WhatsApp" data-campo-whatsapp="1" value={f.whatsapp} onChange={campo("whatsapp")} />
+          {err("whatsapp")}
+        </Campo>
+        <Campo etiqueta="Dirección del centro" ayuda="Escríbela completa (calle, número, código postal y ciudad): con ella se dibuja el mapa y se calcula «Cómo llegar».">
+          <input className="input" aria-label="Dirección del centro" data-campo-direccion="1" maxLength={MAX_DIRECCION} value={f.direccion} onChange={campo("direccion")} />
+          {err("direccion")}
+        </Campo>
+        <Campo etiqueta="Enlace de Google Maps (opcional)" ayuda="En Google Maps busca tu centro → Compartir → Copiar enlace, y pégalo aquí. Sale como «Ver en Google Maps» (con tus reseñas y fotos).">
+          <input className="input" inputMode="url" aria-label="Enlace de Google Maps" data-campo-maps="1" placeholder="https://maps.app.goo.gl/…" value={f.mapsUrl} onChange={campo("mapsUrl")} />
+          {err("mapsUrl")}
+        </Campo>
+        {vista.mapaEmbed && (
+          <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--line)", marginBottom: 12, maxWidth: 520 }}>
+            <iframe title="Vista previa del mapa" src={vista.mapaEmbed} width="100%" height="200" style={{ border: 0, display: "block" }} loading="lazy" />
+          </div>
+        )}
+        <button type="button" className="btn btn-gold" data-guardar-contacto="1" disabled={hayError || !cambiado || guardando} onClick={guardar}>{guardando ? "Guardando…" : "Guardar contacto y dirección"}</button>
+      </div>
+    </Seccion>
   );
 }
 
@@ -236,7 +289,7 @@ function Conexiones({ ajustes, onGuardarAjuste, currentUser, showToast, onImport
   const [resultado, setResultado] = useState(null);
   const [supa, setSupa] = useState({ estado: "probando" });
 
-  const imp = { activa: ajustes.importacion?.activa !== false, segundos: ajustes.importacion?.segundos || 60 };
+  const imp = { activa: ajustes.importacion?.activa !== false, segundos: ajustes.importacion?.segundos || 60, borrarCanceladas: ajustes.importacion?.borrarCanceladas !== false };
   const token = ajustes.webhook?.token || "";
   const urlWebhook = typeof window !== "undefined" && token ? `${window.location.origin}/api/ghl/webhook?token=${token}` : "";
 
@@ -406,7 +459,7 @@ function Conexiones({ ajustes, onGuardarAjuste, currentUser, showToast, onImport
         <div style={{ fontSize: 13, color: MUTED }}>Se pausa sola cuando la pestaña no está a la vista y se actualiza al instante al volver a ella.</div>
       </Seccion>
 
-      <Seccion titulo="Citas que se crean en GHL" ayuda="Trae a la agenda las reservas que entran por GHL (calendario público, embudos…). Solo crea citas nuevas: nunca modifica ni borra las que ya tienes.">
+      <Seccion titulo="Citas que se crean en GHL" ayuda="Trae a la agenda las reservas que entran por GHL (calendario público, embudos, bot de IA…) y refleja aquí lo que se mueve o se cancela allí.">
         <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, marginBottom: 10 }}>
           <input type="checkbox" checked={imp.activa} onChange={(e) => onGuardarAjuste("importacion", { ...imp, activa: e.target.checked })} />
           Traerlas automáticamente mientras la agenda está abierta
@@ -421,6 +474,10 @@ function Conexiones({ ajustes, onGuardarAjuste, currentUser, showToast, onImport
             </select>
           </Campo>
         )}
+        <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 14, marginBottom: 12 }}>
+          <input type="checkbox" data-borrar-canceladas="1" checked={imp.borrarCanceladas} style={{ marginTop: 3 }} onChange={(e) => onGuardarAjuste("importacion", { ...imp, borrarCanceladas: e.target.checked })} />
+          <span>Quitar de la agenda las citas que se cancelan en GHL (por ejemplo, el bot de IA)<br /><span style={{ fontSize: 12.5, color: MUTED }}>En vez de quedarse como «cancelada», se borra de la agenda y, a los 3 segundos, también de GHL (su automatización de «cita cancelada» ya se ha lanzado). Queda apuntado en Actividad. Las cobradas y las que usan un bono se quedan como canceladas.</span></span>
+        </label>
         <button type="button" className="btn btn-ghost" onClick={importarAhora} disabled={importando}>
           <RefreshCw size={14} aria-hidden="true" /> {importando ? "Importando…" : "Importar ahora"}
         </button>

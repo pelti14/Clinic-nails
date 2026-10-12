@@ -24,6 +24,25 @@ function Fila({ cita, servicios, empleadas, cabinas, todasLasCitas, bloqueos, ho
   const campo = valorDelCampo(cita.notas), titulo = tituloDeGHL(cita.notas);
 
   async function accion(f) { setTrabajando(true); try { await f(); } finally { setTrabajando(false); } }
+  // «Mirar ahora en GHL»: qué pone AHORA el campo «Servicio» del contacto
+  const [mirada, setMirada] = useState(null);
+  async function mirarEnGHL() {
+    setMirada({ cargando: true });
+    try {
+      const r = await fetch("/api/ghl/campo-servicio", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ citaId: cita.id }) });
+      setMirada(await r.json().catch(() => ({ ok: false, error: "Respuesta no válida" })));
+    } catch (e) { setMirada({ ok: false, error: "Sin conexión" }); }
+  }
+  const textoMirada = (m) => {
+    if (m.cargando) return "Mirando en GHL…";
+    if (!m.ok) return `No se ha podido mirar: ${m.error || "error desconocido"}.`;
+    if (m.sinPermiso) return m.mensaje;
+    if (m.sinCampo) return `En GHL no hay ningún campo de contacto que se llame «Servicio»${m.campos?.length ? ` (los que hay: ${m.campos.join(", ")})` : ""}. Créalo (tipo texto) y que el bot lo rellene.`;
+    const campoTxt = `el campo «${m.campo.nombre}»${m.campo.clave ? ` (${m.campo.clave})` : ""}`;
+    if (m.sinContacto) return `Esta reserva no tiene contacto en GHL, así que no hay ${campoTxt} que leer.`;
+    if (!m.valor) return `Ahora mismo ${campoTxt} de este contacto está VACÍO: el bot no lo está rellenando. En GHL, en el bot de IA, revisa que la acción que guarda el servicio escriba en ese campo y que se ejecute ANTES o justo después de reservar.${m.campo.tipo && !/TEXT/i.test(m.campo.tipo) ? ` Además, es de tipo ${m.campo.tipo}: mejor de tipo texto.` : ""}`;
+    return `Ahora ${campoTxt} dice «${m.valor}». En la próxima sincronización (en un minuto) la agenda lo aplicará sola si coincide con un servicio; si no, elige el correcto aquí.`;
+  };
   return (
     <div data-fila-revisar={cita.id} className="card" style={{ padding: 14, marginBottom: 10, borderLeft: "4px solid #F59E0B" }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
@@ -52,7 +71,9 @@ function Fila({ cita, servicios, empleadas, cabinas, todasLasCitas, bloqueos, ho
       <div style={{ display: "flex", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
         <button type="button" className="link-btn" data-esta-bien={cita.id} disabled={trabajando} style={{ fontSize: 13 }} onClick={() => accion(() => onEstaBien(cita))}>Está bien así (dejar el servicio actual)</button>
         <button type="button" className="link-btn" data-abrir-cita-revisar={cita.id} style={{ fontSize: 13 }} onClick={() => onAbrirCita(cita)}>Abrir la cita</button>
+        <button type="button" className="link-btn" data-mirar-ghl={cita.id} disabled={mirada?.cargando} style={{ fontSize: 13 }} onClick={mirarEnGHL}>Mirar ahora en GHL</button>
       </div>
+      {mirada && <div role="status" data-mirada-ghl={cita.id} style={{ marginTop: 8, fontSize: 13, lineHeight: 1.5, padding: "8px 10px", borderRadius: 10, background: "rgba(var(--accent-rgb),0.08)" }}>{textoMirada(mirada)}</div>}
     </div>
   );
 }
@@ -65,6 +86,7 @@ export default function PorRevisar({ ui, citas, servicios, empleadas, cabinas, t
       <p style={{ fontSize: 13.5, color: MUTED, marginTop: -4 }}>
         Son reservas que hizo el bot de IA sin saber qué servicio era: la agenda les puso uno por defecto y conservan la duración del calendario de GHL.
         Elige el servicio correcto: la cita pasará a durar lo que dura ese servicio y se corregirá también en GHL (título y duración).
+        Si el bot escribe el servicio un poco después de reservar, la agenda lo vuelve a mirar sola en cada sincronización con GHL (cada minuto con la agenda abierta, durante 24 h) y la corrige sin que hagas nada.
       </p>
       {citas.length === 0 && <div data-sin-revisar="1" className="card" style={{ padding: 18, color: MUTED }}>✓ No hay ninguna reserva por revisar.</div>}
       {citas.map((c) => <Fila key={c.id} cita={c} servicios={activos} empleadas={empleadas} cabinas={cabinas} todasLasCitas={todasLasCitas} bloqueos={bloqueos} horarioDe={horarioDe} onCorregir={onCorregir} onEstaBien={onEstaBien} onAbrirCita={onAbrirCita} />)}
