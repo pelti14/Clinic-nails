@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barbería Antón – Peluquería Masculina | Pontevedra & Vigo</title>
+<meta name="description" content="Barbería premium en Pontevedra y Vigo. Cortes de precisión, arreglo de barba y experiencia de barbería clásica. Reserva online ahora.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EDE6D6;
+    --gold: #C9A84C;
+    --charcoal: #1A1A1A;
+    --mid: #4A4A4A;
+    --white: #FDFAF5;
+    --section-pad: clamp(4rem, 8vw, 7rem) clamp(1.5rem, 6vw, 5rem);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--cream);
+    color: var(--charcoal);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  .serif { font-family: 'Cormorant Garamond', serif; }
+  h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 400; line-height: 1.15; }
+  h1 { font-size: clamp(2.8rem, 7vw, 5.5rem); }
+  h2 { font-size: clamp(2.2rem, 4.5vw, 3.8rem); }
+  h3 { font-size: clamp(1.5rem, 2.5vw, 2.2rem); font-weight: 400; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem clamp(1.2rem, 4vw, 3.5rem);
+    background: rgba(245,240,232,0.96);
+    backdrop-filter: blur(10px);
+    border-bottom: 0.5px solid rgba(201,168,76,0.25);
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--charcoal);
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links {
+    display: flex;
+    gap: 1.8rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+
+  .nav-cta { display: flex; gap: 0.6rem; }
+
+  .btn {
+    display: inline-block;
+    padding: 0.65rem 1.5rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1.5px solid var(--charcoal);
+    color: var(--charcoal);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--charcoal); color: var(--cream); }
+
+  .btn-gold {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #1A1A1A;
+  }
+  .btn-gold:hover { background: #a8863a; border-color: #a8863a; color: #1A1A1A; }
+
+  /* ─── FLOATING BAR ─── */
+  .floating-bar {
+    position: fixed;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    gap: 0.5rem;
+    background: var(--charcoal);
+    padding: 0.7rem 1rem;
+    border-radius: 60px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .floating-bar a {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.55rem 1.1rem;
+    border-radius: 40px;
+    transition: all 0.2s;
+  }
+
+  .float-call {
+    color: #FDFAF5;
+    border: 1px solid rgba(253,250,245,0.5);
+  }
+  .float-call:hover { background: rgba(253,250,245,0.12); }
+
+  .float-book {
+    background: var(--gold);
+    color: #1A1A1A;
+    border: 1px solid var(--gold);
+    font-weight: 700;
+  }
+  .float-book:hover { background: #a8863a; }
+
+  .float-divider {
+    width: 1px;
+    height: 22px;
+    background: rgba(245,240,232,0.2);
+    flex-shrink: 0;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    padding-top: 4.5rem;
+    overflow: hidden;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(2.5rem, 5vw, 5rem) clamp(1.5rem, 4vw, 4rem);
+    padding-right: 2rem;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+    font-weight: 500;
+  }
+
+  .hero h1 { margin-bottom: 1.2rem; font-style: italic; }
+  .hero h1 strong { font-style: normal; font-weight: 600; display: block; }
+
+  .hero-sub {
+    font-size: 1.08rem;
+    color: var(--charcoal);
+    max-width: 420px;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+  }
+
+  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .hero-media {
+    position: relative;
+    overflow: hidden;
+    min-height: 500px;
+  }
+  .hero-media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    top: 0; left: 0;
+  }
+  .hero-media-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, var(--cream) 0%, transparent 18%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ─── ELIGE TU BARBERÍA ─── */
+  .choose {
+    padding: var(--section-pad);
+    background: var(--charcoal);
+    color: var(--cream);
+  }
+
+  .choose-header { text-align: center; margin-bottom: 3.5rem; }
+  .choose-header h2 { color: #FDFAF5; }
+  .choose-sub {
+    font-size: 1rem;
+    color: rgba(245,240,232,0.8);
+    margin-top: 0.8rem;
+  }
+
+  .choose-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .location-card {
+    position: relative;
+    padding: 2.5rem 2rem 2rem;
+    border: 0.5px solid rgba(201,168,76,0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all 0.3s;
+    background: rgba(255,255,255,0.03);
+  }
+  .location-card:hover {
+    background: rgba(201,168,76,0.08);
+    border-color: var(--gold);
+  }
+
+  .location-card-badge {
+    position: absolute;
+    top: 1.2rem; right: 1.2rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid rgba(201,168,76,0.55);
+    color: rgba(201,168,76,0.9);
+    font-weight: 500;
+  }
+
+  .location-tag {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .location-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: #FDFAF5;
+  }
+
+  .location-desc {
+    font-size: 0.97rem;
+    color: rgba(245,240,232,0.82);
+    line-height: 1.75;
+  }
+
+  .location-address {
+    font-size: 0.85rem;
+    color: rgba(245,240,232,0.55);
+    letter-spacing: 0.04em;
+  }
+
+  .location-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-fill-gold {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: var(--gold);
+    border: 1.5px solid var(--gold);
+    color: #1A1A1A;
+    transition: all 0.2s;
+  }
+  .btn-fill-gold:hover { background: #a8863a; border-color: #a8863a; }
+
+  .btn-outline-cream {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.5rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1.5px solid rgba(245,240,232,0.65);
+    color: #FDFAF5;
+    transition: all 0.2s;
+  }
+  .btn-outline-cream:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ─── SERVICIOS ─── */
+  .services {
+    padding: var(--section-pad);
+    background: var(--white);
+  }
+
+  .section-header { margin-bottom: 3rem; }
+
+  .section-eyebrow {
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.8rem;
+    display: block;
+    font-weight: 500;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--cream-dark);
+    border: 1px solid var(--cream-dark);
+  }
+
+  .service-item {
+    padding: 2rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: var(--white);
+    transition: background 0.2s;
+  }
+  .service-item:hover { background: var(--cream); }
+
+  .service-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    line-height: 1.2;
+  }
+
+  .service-desc {
+    font-size: 0.95rem;
+    color: var(--mid);
+    line-height: 1.7;
+    flex: 1;
+  }
+
+  .service-duration {
+    font-size: 0.82rem;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-top: 0.25rem;
+  }
+
+  /* ─── RESERVA SIMPLE ─── */
+  .book-simple {
+    padding: clamp(3rem, 6vw, 5rem) clamp(1.5rem, 6vw, 5rem);
+    background: var(--cream-dark);
+    text-align: center;
+  }
+
+  .book-simple h2 { margin-bottom: 0.75rem; }
+  .book-simple .sub {
+    font-size: 1.05rem;
+    color: var(--mid);
+    margin-bottom: 2.5rem;
+  }
+
+  .book-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .book-btn {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1.8rem 2rem;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .book-btn-pontevedra {
+    background: var(--charcoal);
+    color: #FDFAF5;
+    border: 2px solid var(--charcoal);
+  }
+  .book-btn-pontevedra:hover { background: #2e2e2e; }
+
+  .book-btn-vigo {
+    background: var(--gold);
+    color: #1A1A1A;
+    border: 2px solid var(--gold);
+  }
+  .book-btn-vigo:hover { background: #a8863a; border-color: #a8863a; }
+
+  .book-btn-city {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .book-btn-label {
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .book-btn-arrow {
+    font-size: 1.2rem;
+    margin-top: 0.3rem;
+  }
+
+  /* ─── PROOF / VÍDEOS ─── */
+  .proof {
+    padding: var(--section-pad);
+    background: var(--cream);
+  }
+
+  .proof-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .proof-video {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 9/16;
+    max-height: 500px;
+  }
+  .proof-video video {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .proof-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 2rem 1.2rem 1.2rem;
+    background: linear-gradient(to top, rgba(26,26,26,0.92) 0%, transparent 100%);
+    color: #FDFAF5;
+    font-size: 0.95rem;
+  }
+  .proof-caption strong {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+    margin-bottom: 0.2rem;
+    color: #FDFAF5;
+  }
+
+  .proof-exterior {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 0;
+    align-items: stretch;
+    background: var(--charcoal);
+  }
+  .proof-exterior-text {
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+  }
+  .proof-exterior-text h3 { color: #FDFAF5; }
+  .proof-exterior-text p { color: rgba(245,240,232,0.82); font-size: 1rem; line-height: 1.8; }
+
+  .proof-exterior img {
+    width: 100%; height: 100%;
+    min-height: 280px;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* ─── MEMBRESÍA ─── */
+  .membership {
+    padding: var(--section-pad);
+    background: var(--cream-dark);
+  }
+
+  .membership-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .membership-inner h2 { margin-bottom: 1.2rem; }
+  .membership-inner > p {
+    color: var(--charcoal);
+    font-size: 1.08rem;
+    line-height: 1.85;
+    margin-bottom: 2.5rem;
+  }
+
+  .membership-perks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin: 2.5rem 0;
+    text-align: left;
+  }
+
+  .perk {
+    padding: 1.5rem 1.2rem;
+    border-top: 2px solid var(--gold);
+  }
+
+  .perk-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 400;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .perk h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: var(--charcoal);
+  }
+  .perk p {
+    font-size: 0.93rem;
+    color: var(--mid);
+    margin: 0;
+  }
+
+  /* ─── RESEÑAS ─── */
+  .reviews {
+    padding: var(--section-pad);
+    background: var(--white);
+  }
+
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .review-card {
+    padding: 2rem;
+    border: 0.5px solid var(--cream-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: var(--cream);
+  }
+
+  .review-stars { color: var(--gold); font-size: 1rem; letter-spacing: 0.1em; }
+
+  .review-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.18rem;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.7;
+    color: var(--charcoal);
+    flex: 1;
+  }
+
+  .review-author {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    font-weight: 600;
+  }
+  .review-location {
+    font-size: 0.75rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+
+  /* ─── FINAL CTA ─── */
+  .final-cta {
+    padding: var(--section-pad);
+    background: var(--charcoal);
+    text-align: center;
+  }
+  .final-cta h2 { color: #FDFAF5; margin-bottom: 1rem; }
+  .final-cta > p {
+    color: rgba(245,240,232,0.7);
+    margin-bottom: 3rem;
+    font-size: 1rem;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 1.8rem clamp(1.5rem, 5vw, 4rem);
+    background: var(--charcoal);
+    border-top: 0.5px solid rgba(201,168,76,0.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: rgba(245,240,232,0.75);
+    letter-spacing: 0.08em;
+  }
+  footer p { font-size: 0.72rem; color: rgba(245,240,232,0.3); }
+  footer a { font-size: 0.75rem; color: rgba(245,240,232,0.45); text-decoration: none; }
+  footer a:hover { color: var(--gold); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .services-grid { grid-template-columns: repeat(2, 1fr); }
+    .reviews-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    /* HERO */
+    .hero {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      min-height: auto;
+      padding-top: 4rem;
+    }
+    .hero-content { padding: 2.5rem 1.5rem 2rem; order: 2; }
+    .hero-media {
+      order: 1;
+      min-height: 65vw;
+      height: 65vw;
+      max-height: 420px;
+      position: relative;
+    }
+    .hero-media video { position: absolute; width: 100%; height: 100%; }
+    .hero-media-overlay { background: linear-gradient(to bottom, transparent 60%, var(--cream) 100%); }
+    .hero-sub { max-width: 100%; }
+
+    .choose-grid { grid-template-columns: 1fr; }
+    .location-card-badge { display: none; }
+    .services-grid { grid-template-columns: 1fr; }
+    .reviews-grid { grid-template-columns: 1fr; }
+    .membership-perks { grid-template-columns: 1fr; }
+
+    /* PROOF — vídeos centrados */
+    .proof { padding: 3rem 1rem; }
+    .proof-grid { grid-template-columns: 1fr; gap: 1.2rem; }
+    .proof-video {
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      aspect-ratio: 9/16;
+      max-height: 460px;
+    }
+    .proof-exterior {
+      grid-template-columns: 1fr;
+      max-width: 360px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .proof-exterior img { height: 220px; }
+    .proof-exterior-text { padding: 2rem 1.5rem; }
+
+    /* NAV */
+    .nav-links { display: none; }
+    .nav-cta .btn:first-child { display: none; }
+
+    /* FLOATING BAR */
+    .floating-bar {
+      left: 0.8rem; right: 0.8rem;
+      transform: none;
+      border-radius: 14px;
+      padding: 0.6rem 0.8rem;
+      justify-content: space-between;
+    }
+    .floating-bar a {
+      flex: 1; justify-content: center;
+      font-size: 0.75rem; padding: 0.5rem;
+    }
+
+    .book-buttons { flex-direction: column; gap: 1rem; }
+    .book-btn { min-width: auto; }
+    footer { flex-direction: column; text-align: center; gap: 0.75rem; }
+  }
+
+  /* ─── HAMBURGER & MOBILE MENU ─── */
+  .nav-burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem;
+    z-index: 110;
+  }
+  .nav-burger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--charcoal);
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: var(--cream);
+    flex-direction: column;
+    padding: 5rem 2rem 3rem;
+    gap: 0;
+    overflow-y: auto;
+  }
+  .mobile-menu.open { display: flex; }
+
+  .mobile-menu-close {
+    position: absolute;
+    top: 1.2rem; right: 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--charcoal);
+    line-height: 1;
+  }
+
+  .mobile-menu ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .mobile-menu ul li {
+    border-bottom: 0.5px solid var(--cream-dark);
+  }
+  .mobile-menu ul li a {
+    display: block;
+    padding: 1.2rem 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--charcoal);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+  .mobile-menu ul li a:hover { color: var(--gold); }
+
+  .mobile-menu-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 2.5rem;
+  }
+
+  .btn-mobile-pontevedra, .btn-mobile-vigo {
+    display: block;
+    text-align: center;
+    padding: 1rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-mobile-pontevedra {
+    border: 1.5px solid var(--charcoal);
+    color: var(--charcoal);
+    background: transparent;
+  }
+  .btn-mobile-pontevedra:hover { background: var(--charcoal); color: var(--cream); }
+  .btn-mobile-vigo {
+    background: var(--gold);
+    border: 1.5px solid var(--gold);
+    color: #1A1A1A;
+  }
+  .btn-mobile-vigo:hover { background: #a8863a; }
+
+  @media (max-width: 768px) {
+    .nav-burger { display: flex; }
+    .nav-cta { display: none; }
+  }
+</style>
+
+<script>
+  function toggleMenu() {
+    const m = document.getElementById('mobileMenu');
+    m.classList.toggle('open');
+    document.body.style.overflow = m.classList.contains('open') ? 'hidden' : '';
+  }
+</script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">ANTÓN <span>·</span></a>
+  <ul class="nav-links">
+    <li><a href="#elige">Elige tu barbería</a></li>
+    <li><a href="#servicios">Servicios</a></li>
+    <li><a href="#trabajos">Trabajos</a></li>
+    <li><a href="#reserva">Reservar</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="tel:886642488" class="btn">Pontevedra</a>
+    <a href="tel:624446649" class="btn btn-gold">Vigo</a>
+  </div>
+  <!-- HAMBURGER (solo móvil) -->
+  <button class="nav-burger" onclick="toggleMenu()" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-menu-close" onclick="toggleMenu()">✕</button>
+  <ul>
+    <li><a href="#elige" onclick="toggleMenu()">Elige tu barbería</a></li>
+    <li><a href="#servicios" onclick="toggleMenu()">Servicios</a></li>
+    <li><a href="#trabajos" onclick="toggleMenu()">Trabajos</a></li>
+    <li><a href="#reserva" onclick="toggleMenu()">Reservar</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <div class="mobile-menu-cta">
+    <a href="tel:886642488" class="btn btn-mobile-pontevedra">☎ Pontevedra · 886 64 24 88</a>
+    <a href="tel:624446649" class="btn btn-mobile-vigo">☎ Vigo · 624 44 66 49</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">Barbería premium · Pontevedra & Vigo</p>
+    <h1>
+      <em>La mejor versión</em>
+      <strong>empieza aquí.</strong>
+    </h1>
+    <p class="hero-sub">No cortamos el pelo. Definimos cómo te presentas al mundo. Cortes de precisión, arreglo de barba y experiencia que no olvidarás.</p>
+    <div class="hero-actions">
+      <a href="#reserva" class="btn btn-gold">Reservar ahora</a>
+      <a href="#trabajos" class="btn">Ver trabajos</a>
+    </div>
+  </div>
+  <div class="hero-media">
+    <video autoplay muted loop playsinline>
+      <source src="https://assets.cdn.filesafe.space/nPCFIHv5AHVuQhd7YSkP/media/6a393beb7b0052958096b8a9.mp4" type="video/mp4">
+    </video>
+    <div class="hero-media-overlay"></div>
+  </div>
+</section>
+
+<!-- ELIGE TU BARBERÍA -->
+<section class="choose" id="elige">
+  <div class="choose-header">
+    <h2>¿Dónde estás tú?</h2>
+    <p class="choose-sub">Dos centros. Elige el tuyo y reserva en menos de un minuto.</p>
+  </div>
+  <div class="choose-grid">
+    <div class="location-card">
+      <span class="location-card-badge">Experiencia premium</span>
+      <span class="location-tag">Pontevedra</span>
+      <h3 class="location-name">Barbería<br>Antón<br>Pontevedra</h3>
+      <p class="location-desc">La experiencia completa. Diagnóstico personal, ritual de afeitado, protocolo de piel. Para el hombre que entiende que cuidarse no es un lujo, es una decisión.</p>
+      <p class="location-address">Calle Sagasta 6, Pontevedra</p>
+      <div class="location-actions">
+        <a href="https://www.fresha.com/es/book-now/clinic-nails-wc4yktg0/all-offer?id=2704825&share=true&pId=2612283" target="_blank" class="btn-fill-gold">Reservar online →</a>
+        <a href="tel:886642488" class="btn-outline-cream">☎ 886 64 24 88</a>
+      </div>
+    </div>
+    <div class="location-card">
+      <span class="location-card-badge">Resultados sin esperas</span>
+      <span class="location-tag">Vigo</span>
+      <h3 class="location-name">Barbería<br>Antón<br>Vigo</h3>
+      <p class="location-desc">Precisión, velocidad y acabados de primer nivel. En el C.C. Travesía. Para el hombre que va al grano y sale impecable sin perder el tiempo.</p>
+      <p class="location-address">C.C. Travesía, Vigo</p>
+      <div class="location-actions">
+        <a href="https://travesia.barberianton.com/reservar" target="_blank" class="btn-fill-gold">Reservar online →</a>
+        <a href="tel:624446649" class="btn-outline-cream">☎ 624 44 66 49</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="services" id="servicios">
+  <div class="section-header">
+    <span class="section-eyebrow">Lo que hacemos</span>
+    <h2>Servicios</h2>
+  </div>
+  <div class="services-grid">
+    <div class="service-item">
+      <span class="service-name">Corte de cabello</span>
+      <p class="service-desc">Diagnóstico de cara, consulta de estilo y corte de precisión. Acabado con secador y producto.</p>
+      <span class="service-duration">30 min aprox.</span>
+    </div>
+    <div class="service-item">
+      <span class="service-name">Corte + Barba</span>
+      <p class="service-desc">El combo completo. Corte de precisión, perfilado y arreglo de barba con navaja y acabado en caliente.</p>
+      <span class="service-duration">40 min aprox.</span>
+    </div>
+    <div class="service-item">
+      <span class="service-name">Afeitado clásico</span>
+      <p class="service-desc">Ritual de barbería tradicional. Toalla caliente, espuma artesanal, navaja de filo y bálsamo final.</p>
+      <span class="service-duration">60 min</span>
+    </div>
+    <div class="service-item">
+      <span class="service-name">Peeling de cuero cabelludo</span>
+      <p class="service-desc">Tratamiento exfoliante que elimina residuos, activa la circulación y prepara el cuero cabelludo.</p>
+      <span class="service-duration">20 min</span>
+    </div>
+    <div class="service-item">
+      <span class="service-name">Corrección de color</span>
+      <p class="service-desc">Neutralización de daños por color, decoloración o mechas. Vuelta al pelo natural y estructurado.</p>
+      <span class="service-duration">Según diagnóstico</span>
+    </div>
+    <div class="service-item">
+      <span class="service-name">Bono 4 cortes</span>
+      <p class="service-desc">Tu barbero de cabecera. Cuatro visitas con historial de corte y seguimiento personalizado.</p>
+      <span class="service-duration">Válido 6 meses</span>
+    </div>
+  </div>
+</section>
+
+<!-- RESERVA SIMPLE -->
+<section class="book-simple" id="reserva">
+  <span class="section-eyebrow">Reserva online</span>
+  <h2>¿Dónde quieres tu cita?</h2>
+  <p class="sub">Elige tu ciudad y reserva directo. En menos de un minuto.</p>
+  <div class="book-buttons">
+    <a href="https://www.fresha.com/es/book-now/clinic-nails-wc4yktg0/all-offer?id=2704825&share=true&pId=2612283" target="_blank" class="book-btn book-btn-pontevedra">
+      <span class="book-btn-label">Reservar en</span>
+      <span class="book-btn-city">Pontevedra</span>
+      <span class="book-btn-label" style="opacity:0.6; font-size:0.7rem;">Calle Sagasta 6</span>
+      <span class="book-btn-arrow">→</span>
+    </a>
+    <a href="https://travesia.barberianton.com/reservar" target="_blank" class="book-btn book-btn-vigo">
+      <span class="book-btn-label">Reservar en</span>
+      <span class="book-btn-city">Vigo</span>
+      <span class="book-btn-label" style="opacity:0.7; font-size:0.7rem;">C.C. Travesía</span>
+      <span class="book-btn-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- TRABAJOS / PROOF -->
+<section class="proof" id="trabajos">
+  <span class="section-eyebrow">Resultados reales</span>
+  <h2>El trabajo habla<br><em>por sí solo.</em></h2>
+  <div class="proof-grid">
+    <div class="proof-video">
+      <video autoplay muted loop playsinline>
+        <source src="https://assets.cdn.filesafe.space/nPCFIHv5AHVuQhd7YSkP/media/6a393beb9aae5140d0a359e5.mp4" type="video/mp4">
+      </video>
+      <div class="proof-caption">
+        <strong>De color azul a pelo natural</strong>
+        Corrección de daño por coloración · Pontevedra
+      </div>
+    </div>
+    <div class="proof-video">
+      <video autoplay muted loop playsinline>
+        <source src="https://assets.cdn.filesafe.space/nPCFIHv5AHVuQhd7YSkP/media/6a393beb18f53fe5a6843ffa.mp4" type="video/mp4">
+      </video>
+      <div class="proof-caption">
+        <strong>Degradado + barba</strong>
+        Acabado de precisión con navaja · Pontevedra
+      </div>
+    </div>
+    <div class="proof-exterior">
+      <div class="proof-exterior-text">
+        <h3>Un espacio diseñado<br><em>para ti.</em></h3>
+        <p>No vienes solo a cortarte el pelo. Vienes a desconectar, a que alguien te atienda como mereces y a salir sintiéndote diferente. Eso es lo que construimos en Antón.</p>
+      </div>
+      <img src="https://assets.cdn.filesafe.space/nPCFIHv5AHVuQhd7YSkP/media/6a393b5494d484b9c6a34064.jpg" alt="Exterior Barbería Antón Pontevedra">
+    </div>
+  </div>
+</section>
+
+<!-- MEMBRESÍA -->
+<section class="membership">
+  <div class="membership-inner">
+    <span class="section-eyebrow">Para clientes habituales</span>
+    <h2>El bono Antón:<br><em>tu barbero de cabecera.</em></h2>
+    <p>Cuatro visitas con historial personalizado, ritual de bienvenida y seguimiento real de tu pelo. Sin andar explicando de cero cada vez.</p>
+    <div class="membership-perks">
+      <div class="perk">
+        <div class="perk-number">01</div>
+        <h4>Diagnóstico inicial</h4>
+        <p>Primera visita completa con ficha personal de cabello, cara y estilo.</p>
+      </div>
+      <div class="perk">
+        <div class="perk-number">02</div>
+        <h4>Ritual en cada visita</h4>
+        <p>Peeling express de cuero cabelludo en cada cita. Incluido en el bono.</p>
+      </div>
+      <div class="perk">
+        <div class="perk-number">03</div>
+        <h4>Tu barbero te recuerda</h4>
+        <p>Historial de corte. Cada visita parte de donde dejamos la anterior.</p>
+      </div>
+    </div>
+    <a href="#reserva" class="btn btn-gold" style="font-size:0.88rem; padding:0.9rem 2.5rem;">Empezar con un bono →</a>
+  </div>
+</section>
+
+<!-- RESEÑAS -->
+<section class="reviews">
+  <span class="section-eyebrow">Lo que dicen los clientes</span>
+  <h2>Ellos ya vinieron.</h2>
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"El mejor corte que me han hecho en años. Saben lo que hacen y se nota desde el primer minuto."</p>
+      <div>
+        <p class="review-author">— Carlos M.</p>
+        <p class="review-location">Pontevedra</p>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Fui por el corte y salí con la barba también. No voy a ningún otro sitio. El ambiente es otro nivel."</p>
+      <div>
+        <p class="review-author">— Diego R.</p>
+        <p class="review-location">Vigo</p>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">"Llevaba el pelo destrozado por el color. Me lo dejaron como nuevo. Explican todo y no te meten prisa."</p>
+      <div>
+        <p class="review-author">— Alejandro F.</p>
+        <p class="review-location">Pontevedra</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <h2>Tu próxima cita,<br><em>a un clic.</em></h2>
+  <p>Sin esperas. Sin complicaciones. Elige tu barbería.</p>
+  <div class="book-buttons">
+    <a href="https://www.fresha.com/es/book-now/clinic-nails-wc4yktg0/all-offer?id=2704825&share=true&pId=2612283" target="_blank" class="book-btn" style="background:rgba(255,255,255,0.08); border:1.5px solid rgba(245,240,232,0.3); color:#FDFAF5;">
+      <span class="book-btn-label">Reservar en</span>
+      <span class="book-btn-city">Pontevedra</span>
+      <span style="font-size:0.7rem; opacity:0.5; font-family:'Barlow',sans-serif; letter-spacing:0.1em; text-transform:uppercase;">886 64 24 88</span>
+      <span class="book-btn-arrow">→</span>
+    </a>
+    <a href="https://travesia.barberianton.com/reservar" target="_blank" class="book-btn book-btn-vigo">
+      <span class="book-btn-label">Reservar en</span>
+      <span class="book-btn-city">Vigo</span>
+      <span style="font-size:0.7rem; opacity:0.7; font-family:'Barlow',sans-serif; letter-spacing:0.1em; text-transform:uppercase;">624 44 66 49</span>
+      <span class="book-btn-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="logo">BARBERÍA ANTÓN</span>
+  <p>© 2026 Barbería Antón · Pontevedra & Vigo</p>
+  <div style="display:flex; gap:1.5rem;">
+    <a href="https://www.instagram.com/barberianton" target="_blank">Instagram</a>
+    <a href="/blog">Blog</a>
+    <a href="mailto:info@barberianton.com">Contacto</a>
+  </div>
+</footer>
+
+<!-- FLOATING BAR -->
+<div class="floating-bar">
+  <a href="tel:886642488" class="float-call">☎ Pontevedra</a>
+  <div class="float-divider"></div>
+  <a href="tel:624446649" class="float-call">☎ Vigo</a>
+  <div class="float-divider"></div>
+  <a href="#reserva" class="float-book">Reservar online →</a>
+</div>
+
+</body>
+</html>
